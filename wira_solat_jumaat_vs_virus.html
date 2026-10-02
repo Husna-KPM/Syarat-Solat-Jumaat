@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wira Solat Jumaat vs Virus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+        body {
+            font-family: 'Outfit', sans-serif;
+            overflow: hidden;
+            background: #0f172a;
+        }
+        .font-game {
+            font-family: 'Fredoka One', cursive;
+        }
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+        .pulse-btn {
+            animation: pulse 1.8s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .modal-enter {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="w-screen h-screen flex flex-col justify-between items-center relative bg-slate-950 text-white">
+
+    <!-- HUD Header -->
+    <header class="absolute top-0 left-0 w-full z-10 p-3 sm:p-4 flex justify-between items-center bg-gradient-to-b from-slate-900/90 to-transparent pointer-events-none">
+        <div class="flex items-center gap-3">
+            <div class="bg-slate-800/80 backdrop-blur border border-emerald-500/40 px-3 py-1.5 rounded-2xl flex items-center gap-1.5 shadow-lg">
+                <span class="text-xl">❤️</span>
+                <span id="hearts-display" class="font-game text-xl text-rose-400">❤️❤️❤️❤️❤️</span>
+            </div>
+            <div class="bg-slate-800/80 backdrop-blur border border-amber-500/40 px-3 py-1.5 rounded-2xl flex items-center gap-2 shadow-lg">
+                <span class="text-amber-400 font-game text-sm sm:text-base">SKOR:</span>
+                <span id="score-display" class="font-game text-lg sm:text-xl text-amber-300">0</span>
+            </div>
+        </div>
+
+        <div class="bg-slate-800/80 backdrop-blur border border-indigo-500/40 px-3 py-1.5 rounded-2xl flex items-center gap-2 shadow-lg">
+            <span class="text-indigo-300 font-bold text-xs sm:text-sm">KUIZ:</span>
+            <span id="quiz-progress-display" class="font-game text-sm sm:text-base text-indigo-200">0 / 13</span>
+        </div>
+    </header>
+
+    <!-- Main Game Canvas -->
+    <canvas id="gameCanvas" class="w-full h-full absolute inset-0 z-0 cursor-crosshair"></canvas>
+
+    <!-- Start Screen Modal -->
+    <div id="start-screen" class="absolute inset-0 z-30 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4">
+        <div class="bg-slate-900 border-2 border-emerald-500/50 rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl modal-enter relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl"></div>
+            <div class="text-5xl sm:text-6xl mb-2">🕌⚔️</div>
+            <h1 class="font-game text-2xl sm:text-3xl text-emerald-400 mb-2 tracking-wide">Wira Solat Jumaat vs Virus</h1>
+            <p class="text-slate-300 text-sm sm:text-base mb-6">Pertahankan bandar daripada serangan virus dan uji kefahaman anda tentang **Syarat Wajib** & **Syarat Sah** Solat Jumaat!</p>
+            
+            <div class="bg-slate-800/80 rounded-2xl p-4 text-left text-xs sm:text-sm space-y-2 mb-6 border border-slate-700">
+                <div class="font-bold text-emerald-300 border-b border-slate-700 pb-1 mb-2">👾 Jenis Virus & Ketahanan:</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-yellow-400 inline-block"></span> <b>Kuning (Kecil):</b> Laju (1 kali tekan)</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-400 inline-block"></span> <b>Hijau (Sederhana):</b> Sederhana (2 kali tekan)</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> <b>Merah (Besar):</b> Perlahan (3 kali tekan)</div>
+                <div class="text-slate-400 text-xs pt-1 border-t border-slate-700/60 mt-2">💡 *Setiap 5-6 virus, soalan kuiz akan muncul!*</div>
+            </div>
+
+            <button id="start-btn" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 font-game text-xl rounded-2xl shadow-lg shadow-emerald-500/30 text-white pulse-btn transition transform active:scale-95">
+                MULA PERMAINAN
+            </button>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div id="quiz-modal" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4">
+        <div class="bg-slate-900 border-2 border-indigo-500/60 rounded-3xl p-5 sm:p-8 max-w-xl w-full text-center shadow-2xl modal-enter relative">
+            <div class="inline-block px-4 py-1 bg-indigo-900/60 border border-indigo-500/40 rounded-full text-indigo-300 font-bold text-xs uppercase mb-3">
+                SOALAN KUIZ SOLAT JUMAAT
+            </div>
+            
+            <h2 id="quiz-question" class="text-base sm:text-xl font-semibold text-white mb-6 min-h-[60px] flex items-center justify-center">
+                Penyataan Soalan
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4" id="quiz-options-container">
+                <!-- Options populated dynamically -->
+            </div>
+
+            <div id="quiz-feedback" class="hidden p-3 rounded-xl text-sm font-semibold mb-4 transition-all"></div>
+
+            <button id="next-quiz-btn" class="hidden w-full py-3 bg-indigo-600 hover:bg-indigo-500 font-game text-lg rounded-xl text-white shadow-lg transition">
+                TERUSKAN PERMAINAN ➔
+            </button>
+        </div>
+    </div>
+
+    <!-- Game End Modal (Victory / Defeat) -->
+    <div id="end-modal" class="hidden absolute inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md p-4">
+        <div class="bg-slate-900 border-2 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl modal-enter" id="end-card">
+            <div id="end-icon" class="text-6xl mb-2">🏆</div>
+            <h2 id="end-title" class="font-game text-3xl mb-2">SYABAS!</h2>
+            <p id="end-message" class="text-slate-300 text-sm mb-6">Anda telah berjaya menewaskan semua virus dan menjawab semua soalan!</p>
+
+            <div class="bg-slate-800 rounded-2xl p-4 mb-6 space-y-2">
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Skor Akhir:</span>
+                    <span id="final-score" class="font-bold text-amber-400">0</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Soalan Dijawab:</span>
+                    <span id="final-quiz-count" class="font-bold text-indigo-300">0 / 13</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-slate-400">Virus Dimusnahkan:</span>
+                    <span id="final-virus-count" class="font-bold text-emerald-400">0</span>
+                </div>
+            </div>
+
+            <button id="restart-btn" class="w-full py-4 bg-emerald-500 hover:bg-emerald-400 font-game text-xl rounded-2xl text-white shadow-lg pulse-btn transition transform active:scale-95">
+                MAIN SEMULA 🔄
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* Web Audio API Sound Effects Synthesizer */
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playHit() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+            playDestroy() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+            playHurt() {
+                if (!this.ctx) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+                osc.frequency.setValueAtTime(110, this.ctx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.25);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.25);
+            }
+            playCorrect() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.35);
+            }
+            playWrong() {
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.setValueAtTime(150, now + 0.15);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(now + 0.35);
+            }
+        }
+        const sfx = new SoundFX();
+
+        // Question Dataset
+        const quizQuestionsData = [
+            { text: "Beragama Islam", answer: "Syarat Wajib" },
+            { text: "Solat didirikan secara berjemaah sekurang-kurangnya 40 orang jemaah yang bermastautin (menurut Mazhab Syafi'i)", answer: "Syarat Sah" },
+            { text: "Lelaki (Perempuan tidak diwajibkan)", answer: "Syarat Wajib" },
+            { text: "Didahulukan dengan dua khutbah sebelum solat", answer: "Syarat Sah" },
+            { text: "Baligh (cukup umur)", answer: "Syarat Wajib" },
+            { text: "Solat didirikan dalam waktu Zohor", answer: "Syarat Sah" },
+            { text: "Berakal (tidak gila atau mabuk)", answer: "Syarat Wajib" },
+            { text: "Solat didirikan di satu tempat khas yang difahami sebagai tempat perhimpunan (seperti masjid atau surau jumaat)", answer: "Syarat Sah" },
+            { text: "Sihat fizikal / Tidak mempunyai keuzuran yang dimaafkan (seperti sakit berat)", answer: "Syarat Wajib" },
+            { text: "Bermastautin (penduduk tetap) atau bermukim di tempat solat Jumaat didirikan", answer: "Syarat Wajib" },
+            { text: "Bebas / Merdeka (Bukan hamba)", answer: "Syarat Wajib" },
+            { text: "Mendengar dua khutbah oleh sekurang-kurangnya bilangan jemaah yang sah solat Jumaat (40 orang)", answer: "Syarat Sah" },
+            { text: "Tidak dilakukan dua solat Jumaat di satu tempat/kariah tanpa sebarang keperluan/keharusan syarak", answer: "Syarat Sah" }
+        ];
+
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let gameQuestions = [];
+        let currentQuestionIndex = 0;
+
+        let score = 0;
+        let hearts = 5;
+        let virusesDefeated = 0;
+        let virusesSinceLastQuiz = 0;
+        let targetVirusesForNextQuiz = 5;
+
+        let isGameRunning = false;
+        let isQuizActive = false;
+        let lastTime = 0;
+        let spawnTimer = 0;
+        let spawnInterval = 1600; // ms
+
+        let viruses = [];
+        let particles = [];
+        let laserEffects = [];
+
+        // Pewira Character Engine
+        const hero = {
+            x: 0,
+            y: 0,
+            radius: 32,
+            targetX: 0
+        };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            hero.x = canvas.width / 2;
+            hero.y = canvas.height - 70;
+            hero.targetX = canvas.width / 2;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Virus {
+            constructor(x, type) {
+                this.x = x;
+                this.y = -40;
+                this.type = type; // 'yellow', 'green', 'red'
+                
+                if (type === 'yellow') {
+                    this.radius = 22;
+                    this.maxHp = 1;
+                    this.speed = 2.2 + Math.random() * 0.5;
+                    this.color = '#facc15';
+                    this.borderColor = '#eab308';
+                } else if (type === 'green') {
+                    this.radius = 30;
+                    this.maxHp = 2;
+                    this.speed = 1.4 + Math.random() * 0.4;
+                    this.color = '#4ade80';
+                    this.borderColor = '#16a34a';
+                } else { // red
+                    this.radius = 42;
+                    this.maxHp = 3;
+                    this.speed = 0.8 + Math.random() * 0.3;
+                    this.color = '#f43f5e';
+                    this.borderColor = '#be123c';
+                }
+                
+                this.hp = this.maxHp;
+                this.pulse = 0;
+                this.pulseSpeed = 0.05 + Math.random() * 0.03;
+            }
+
+            update() {
+                this.y += this.speed;
+                this.pulse += this.pulseSpeed;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                // Animated spikes
+                const spikeCount = this.type === 'red' ? 12 : (this.type === 'green' ? 10 : 8);
+                const currentRadius = this.radius + Math.sin(this.pulse) * 2;
+                
+                ctx.fillStyle = this.borderColor;
+                for (let i = 0; i < spikeCount; i++) {
+                    const angle = (Math.PI * 2 / spikeCount) * i;
+                    const sx = Math.cos(angle) * (currentRadius + 6);
+                    const sy = Math.sin(angle) * (currentRadius + 6);
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Virus Main Body
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, currentRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = this.borderColor;
+                ctx.stroke();
+
+                // Virus Eyes
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(-currentRadius * 0.3, -currentRadius * 0.2, currentRadius * 0.25, 0, Math.PI * 2);
+                ctx.arc(currentRadius * 0.3, -currentRadius * 0.2, currentRadius * 0.25, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(-currentRadius * 0.3, -currentRadius * 0.2, currentRadius * 0.1, 0, Math.PI * 2);
+                ctx.arc(currentRadius * 0.3, -currentRadius * 0.2, currentRadius * 0.1, 0, Math.PI * 2);
+                ctx.fill();
+
+                // HP Indicator Badge
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+                ctx.beginPath();
+                ctx.arc(0, currentRadius * 0.4, 11, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px Outfit';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.hp, 0, currentRadius * 0.4 + 1);
+
+                ctx.restore();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.radius = Math.random() * 4 + 2;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6;
+                this.alpha = 1;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.03;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function createExplosion(x, y, color, count = 12) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        function spawnVirus() {
+            if (isQuizActive || !isGameRunning) return;
+            const padding = 50;
+            const x = padding + Math.random() * (canvas.width - padding * 2);
+            
+            const rand = Math.random();
+            let type = 'yellow';
+            if (rand < 0.4) type = 'yellow';
+            else if (rand < 0.75) type = 'green';
+            else type = 'red';
+
+            viruses.push(new Virus(x, type));
+        }
+
+        function triggerQuiz() {
+            if (currentQuestionIndex >= gameQuestions.length) return;
+
+            isQuizActive = true;
+            document.getElementById('quiz-modal').classList.remove('hidden');
+            
+            const q = gameQuestions[currentQuestionIndex];
+            document.getElementById('quiz-question').innerText = q.text;
+            
+            const optionsContainer = document.getElementById('quiz-options-container');
+            optionsContainer.innerHTML = '';
+
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.add('hidden');
+            document.getElementById('next-quiz-btn').classList.add('hidden');
+
+            // Randomized options order
+            const options = shuffleArray(["Syarat Wajib", "Syarat Sah"]);
+
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full py-3.5 px-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 hover:border-indigo-400 rounded-xl font-bold text-white text-base transition transform active:scale-95 text-center flex items-center justify-center gap-2';
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt, q.answer, btn);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected, correct, btnElement) {
+            const buttons = document.querySelectorAll('#quiz-options-container button');
+            buttons.forEach(b => b.disabled = true);
+
+            const feedback = document.getElementById('quiz-feedback');
+            feedback.classList.remove('hidden');
+
+            if (selected === correct) {
+                sfx.playCorrect();
+                btnElement.classList.remove('bg-slate-800', 'border-slate-600');
+                btnElement.classList.add('bg-emerald-600', 'border-emerald-400');
+                
+                feedback.className = 'p-3 rounded-xl text-sm font-semibold mb-4 bg-emerald-950/80 border border-emerald-500/50 text-emerald-300';
+                feedback.innerHTML = '✔ Tahniah! Jawapan anda Betul.';
+                
+                score += 100;
+            } else {
+                sfx.playWrong();
+                btnElement.classList.remove('bg-slate-800', 'border-slate-600');
+                btnElement.classList.add('bg-rose-600', 'border-rose-400');
+
+                feedback.className = 'p-3 rounded-xl text-sm font-semibold mb-4 bg-rose-950/80 border border-rose-500/50 text-rose-300';
+                feedback.innerHTML = `❌ Kurang Tepat! Jawapan sebenar ialah <b>${correct}</b>.`;
+                
+                hearts--;
+                updateHeartsDisplay();
+            }
+
+            currentQuestionIndex++;
+            updateHUD();
+
+            document.getElementById('next-quiz-btn').classList.remove('hidden');
+        }
+
+        document.getElementById('next-quiz-btn').onclick = () => {
+            document.getElementById('quiz-modal').classList.add('hidden');
+            isQuizActive = false;
+            virusesSinceLastQuiz = 0;
+            targetVirusesForNextQuiz = Math.floor(Math.random() * 2) + 5; // 5 or 6 viruses
+
+            if (hearts <= 0) {
+                endGame(false);
+            } else if (currentQuestionIndex >= gameQuestions.length && viruses.length === 0) {
+                endGame(true);
+            }
+        };
+
+        function updateHeartsDisplay() {
+            let heartStr = '';
+            for (let i = 0; i < 5; i++) {
+                heartStr += i < hearts ? '❤️' : '🖤';
+            }
+            document.getElementById('hearts-display').innerText = heartStr;
+        }
+
+        function updateHUD() {
+            document.getElementById('score-display').innerText = score;
+            document.getElementById('quiz-progress-display').innerText = `${currentQuestionIndex} / ${gameQuestions.length}`;
+            updateHeartsDisplay();
+        }
+
+        function drawHero() {
+            // Smooth movement towards target X
+            hero.x += (hero.targetX - hero.x) * 0.15;
+
+            ctx.save();
+            ctx.translate(hero.x, hero.y);
+
+            // Shield / Glow
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+            ctx.beginPath();
+            ctx.arc(0, 0, hero.radius + 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pewira Armor Body
+            ctx.fillStyle = '#059669';
+            ctx.beginPath();
+            ctx.arc(0, 0, hero.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#34d399';
+            ctx.stroke();
+
+            // Pewira Crescent/Star Emblem
+            ctx.fillStyle = '#fef08a';
+            ctx.font = '22px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🌙', 0, 0);
+
+            ctx.restore();
+        }
+
+        function handleInput(clientX, clientY) {
+            if (!isGameRunning || isQuizActive) return;
+
+            sfx.init();
+            hero.targetX = clientX;
+
+            // Check if user hit any virus
+            for (let i = viruses.length - 1; i >= 0; i--) {
+                const v = viruses[i];
+                const dist = Math.hypot(clientX - v.x, clientY - v.y);
+
+                if (dist < v.radius + 18) { // Generous touch radius for smartboards/mobile
+                    v.hp--;
+                    
+                    // Laser Beam FX
+                    laserEffects.push({
+                        x1: hero.x,
+                        y1: hero.y - 20,
+                        x2: v.x,
+                        y2: v.y,
+                        alpha: 1
+                    });
+
+                    if (v.hp <= 0) {
+                        sfx.playDestroy();
+                        createExplosion(v.x, v.y, v.color, 16);
+                        viruses.splice(i, 1);
+                        score += 20;
+                        virusesDefeated++;
+                        virusesSinceLastQuiz++;
+
+                        // Check trigger for question
+                        if (virusesSinceLastQuiz >= targetVirusesForNextQuiz && currentQuestionIndex < gameQuestions.length) {
+                            setTimeout(triggerQuiz, 300);
+                        }
+                    } else {
+                        sfx.playHit();
+                        createExplosion(v.x, v.y, '#ffffff', 6);
+                    }
+                    updateHUD();
+                    break; // Only hit one virus per click
+                }
+            }
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            handleInput(e.clientX, e.clientY);
+        });
+
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            // Clear screen
+            ctx.fillStyle = '#090d16';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid background pattern
+            ctx.strokeStyle = 'rgba(30, 41, 59, 0.4)';
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            if (isGameRunning) {
+                // Virus Spawner
+                spawnTimer += deltaTime;
+                if (spawnTimer > spawnInterval) {
+                    spawnVirus();
+                    spawnTimer = 0;
+                    spawnInterval = Math.max(800, spawnInterval * 0.99); // Gradual difficulty increase
+                }
+
+                // Update & Draw Laser FX
+                for (let i = laserEffects.length - 1; i >= 0; i--) {
+                    const l = laserEffects[i];
+                    ctx.strokeStyle = `rgba(52, 211, 153, ${l.alpha})`;
+                    ctx.lineWidth = 4;
+                    ctx.beginPath();
+                    ctx.moveTo(l.x1, l.y1);
+                    ctx.lineTo(l.x2, l.y2);
+                    ctx.stroke();
+                    l.alpha -= 0.1;
+                    if (l.alpha <= 0) laserEffects.splice(i, 1);
+                }
+
+                // Update & Draw Viruses
+                for (let i = viruses.length - 1; i >= 0; i--) {
+                    const v = viruses[i];
+                    if (!isQuizActive) v.update();
+                    v.draw();
+
+                    // Check if virus reached bottom / hero
+                    if (v.y + v.radius >= canvas.height - 40) {
+                        sfx.playHurt();
+                        createExplosion(v.x, v.y, '#f43f5e', 20);
+                        viruses.splice(i, 1);
+                        hearts--;
+                        updateHUD();
+
+                        if (hearts <= 0) {
+                            endGame(false);
+                        }
+                    }
+                }
+
+                // Update & Draw Particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.update();
+                    p.draw();
+                    if (p.alpha <= 0) particles.splice(i, 1);
+                }
+
+                // Draw Pewira Hero
+                drawHero();
+
+                // Victory check if all questions completed and no viruses left
+                if (currentQuestionIndex >= gameQuestions.length && viruses.length === 0 && !isQuizActive) {
+                    endGame(true);
+                }
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            sfx.init();
+            score = 0;
+            hearts = 5;
+            virusesDefeated = 0;
+            virusesSinceLastQuiz = 0;
+            currentQuestionIndex = 0;
+            spawnInterval = 1600;
+            viruses = [];
+            particles = [];
+            laserEffects = [];
+            
+            gameQuestions = shuffleArray(quizQuestionsData);
+            
+            isGameRunning = true;
+            isQuizActive = false;
+
+            updateHUD();
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('end-modal').classList.add('hidden');
+            document.getElementById('quiz-modal').classList.add('hidden');
+        }
+
+        function endGame(isVictory) {
+            isGameRunning = false;
+            const endCard = document.getElementById('end-card');
+            const endIcon = document.getElementById('end-icon');
+            const endTitle = document.getElementById('end-title');
+            const endMessage = document.getElementById('end-message');
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-quiz-count').innerText = `${currentQuestionIndex} / ${gameQuestions.length}`;
+            document.getElementById('final-virus-count').innerText = virusesDefeated;
+
+            if (isVictory) {
+                sfx.playCorrect();
+                endCard.className = 'bg-slate-900 border-2 border-emerald-500 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl modal-enter';
+                endIcon.innerText = '🎉';
+                endTitle.innerText = 'SYABAS & TAHNIAH!';
+                endTitle.className = 'font-game text-3xl mb-2 text-emerald-400';
+                endMessage.innerText = 'Anda telah berjaya memusnahkan virus & menguasai ilmu Syarat Wajib serta Syarat Sah Solat Jumaat!';
+            } else {
+                sfx.playWrong();
+                endCard.className = 'bg-slate-900 border-2 border-rose-500 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl modal-enter';
+                endIcon.innerText = '💔';
+                endTitle.innerText = 'GAME OVER';
+                endTitle.className = 'font-game text-3xl mb-2 text-rose-500';
+                endMessage.innerText = 'Nyawa anda telah habis! Sila cuba lagi untuk memantapkan kefahaman anda.';
+            }
+
+            document.getElementById('end-modal').classList.remove('hidden');
+        }
+
+        document.getElementById('start-btn').onclick = startGame;
+        document.getElementById('restart-btn').onclick = startGame;
+
+        // Initialize Loop
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
